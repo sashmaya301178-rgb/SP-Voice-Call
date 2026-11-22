@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f3d2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>SP Voice Call</title>
+    <link rel="manifest" id="manifest-placeholder">
+    <style>
+        :root {
+            --primary: #0f3d2e;
+            --primary-light: #195e47;
+            --accent: #d4af37;
+            --accent-hover: #b89628;
+            --bg: #f4f6f5;
+            --card: #ffffff;
+            --text: #1c2824;
+            --text-muted: #62736d;
+            --danger: #d9383a;
+            --success: #229954;
+            --border: #e1e8e5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Tamil", sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            padding-bottom: 80px;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: #fff;
+            padding: 20px 18px;
+            border-bottom: 3px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge {
+            background: var(--accent);
+            color: var(--primary);
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        /* Navigation Tabs */
+        nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            max-width: 500px;
+            background: var(--card);
+            display: flex;
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        nav button {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 12px 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        nav button.active {
+            color: var(--primary);
+            border-top: 3px solid var(--accent);
+        }
+
+        nav button span.icon {
+            font-size: 1.25rem;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+            padding: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Status Banner */
+        .status-box {
+            background: linear-gradient(135deg, #134e3b, #0f3d2e);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            border: 1px solid var(--accent);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.12);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5d1;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Inputs & Buttons */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"], input[type="tel"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            background: #fafcfb;
+        }
+
+        input:focus, textarea:focus {
+            border-color: var(--primary);
+            background: #fff;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+            transition: opacity 0.2s;
+        }
+
+        .btn:active {
+            opacity: 0.85;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .btn-danger {
+            background: #feeaea;
+            color: var(--danger);
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        /* Lists */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .item-info h4 {
+            font-size: 0.95rem;
+            margin-bottom: 3px;
+        }
+
+        .item-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .tag-spam {
+            background: #fde8e8;
+            color: var(--danger);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .tag-safe {
+            background: #e6f7ed;
+            color: var(--success);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+
+        .stat-box p {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        /* Incoming Call Simulation Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 25, 20, 0.92);
+            z-index: 999;
+            color: white;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .caller-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            font-weight: bold;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 30px;
+        }
+
+        .circle-btn {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            border: none;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .note-box {
+            background: #fffbeb;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📞 SP Voice Call <span class="badge">PWA</span></h1>
+    <button onclick="installPWA()" id="installBtn" style="display:none; background:var(--accent); color:var(--primary); border:none; padding:6px 10px; border-radius:8px; font-weight:700; font-size:0.75rem;">+ Install</button>
+</header>
+
+<!-- HOME SECTION -->
+<div id="home" class="section active">
+    <div class="status-box">
+        <div class="status-row">
+            <div>
+                <h2 style="font-size:1.1rem; margin-bottom:4px;">SP அழைப்பு பாதுகாப்பு</h2>
+                <div class="status-indicator"><span class="dot"></span> <span id="protectionStatusText">செயலில் உள்ளது</span></div>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <h3 id="spamCountDisplay">0</h3>
+                <p>தடுக்கப்பட்ட Spam எண்கள்</p>
+            </div>
+            <div class="stat-box">
+                <h3 id="historyCountDisplay">0</h3>
+                <p>அழைப்புப் பதிவுகள்</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">
+            <span>🚫 தெரியாத எண்கள் (Unknown Numbers)</span>
+            <label class="switch">
+                <input type="checkbox" id="unknownToggle" onchange="toggleUnknown()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-muted);" id="unknownDesc">
+            தற்போது: தெரியாத எண்கள் அனுமதிக்கப்படுகின்றன (OFF).
+        </p>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🔔 உள்வரும் அழைப்பு சோதனை (Call Simulator)</div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px;">
+            அழைப்பு வரும்போது தமிழ் குரல் அறிவிப்பு மற்றும் Spam எச்சரிக்கை எப்படி வேலை செய்யும் என்பதைச் சோதிக்கவும்:
+        </p>
+        <div class="input-group">
+            <input type="tel" id="testCallInput" placeholder="சோதனை எண் (எ.கா: 9876543210)" value="9876543210">
+            <button class="btn btn-accent" onclick="simulateIncomingCall()">📞 அழைப்பு சோதனை செய்</button>
+        </div>
+    </div>
+
+    <div class="note-box">
+        <strong>குறிப்பு:</strong> இது ஒரு Web App (PWA). Browser-ல் "Add to Home Screen" செய்தால் மொபைல் ஆப் போலவே செயல்படும். நேரடி SIM அழைப்புகளைத் தடுக்க Android Native App தேவை.
+    </div>
+</div>
+
+<!-- SPAM LIST SECTION -->
+<div id="spam" class="section">
+    <div class="card">
+        <div class="card-title">➕ புதிய Spam எண் சேர்க்க</div>
+        <div class="input-group">
+            <input type="tel" id="spamNumberInput" placeholder="தொலைபேசி எண் (எ.கா: 9123456789)">
+            <input type="text" id="spamReasonInput" placeholder="காரணம் (எ.கா: கடன் விளம்பரம் / Spam)">
+            <button class="btn" onclick="addSpamNumber()">பட்டியலில் சேர்</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📋 Spam எண்கள் பட்டியல்</div>
+        <div id="spamListContainer"></div>
+    </div>
+</div>
+
+<!-- CALL HISTORY SECTION -->
+<div id="history" class="section">
+    <div class="card">
+        <div class="card-title">
+            <span>🕒 அழைப்பு வரலாறு (Call History)</span>
+            <button class="btn-danger" onclick="clearHistory()">அனைத்தையும் அழி</button>
+        </div>
+        <div id="historyListContainer"></div>
+    </div>
+</div>
+
+<!-- TAMIL VOICE TTS SECTION -->
+<div id="voice" class="section">
+    <div class="card">
+        <div class="card-title">🗣️ தமிழில் குரல் சோதனை (Tamil TTS)</div>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">
+            அழைப்பு வரும்போது ஒலிக்க வேண்டிய தமிழ் வாசகத்தை உள்ளிட்டுச் சோதிக்கவும்:
+        </p>
+        <div class="input-group">
+            <textarea id="ttsTextInput" rows="3">வணக்கம்! உங்களுக்கு புதிய அழைப்பு வருகிறது.</textarea>
+            <button class="btn btn-accent" onclick="testTamilVoice()">🔊 குரலைக் கேளுங்கள்</button>
+            <button class="btn" onclick="saveVoiceGreeting()">💾 அறிவிப்பைச் சேமி</button>
+        </div>
+        <p id="ttsStatus" style="font-size:0.8rem; color:var(--primary); margin-top:8px;"></p>
+    </div>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<nav>
+    <button class="active" onclick="switchTab('home', this)">
+        <span class="icon">🏠</span>
+        <span>முகப்பு</span>
+    </button>
+    <button onclick="switchTab('spam', this)">
+        <span class="icon">🚫</span>
+        <span>Spam எண்கள்</span>
+    </button>
+    <button onclick="switchTab('history', this)">
+        <span class="icon">📜</span>
+        <span>வரலாறு</span>
+    </button>
+    <button onclick="switchTab('voice', this)">
+        <span class="icon">🎙️</span>
+        <span>தமிழ் குரல்</span>
+    </button>
+</nav>
+
+<!-- INCOMING CALL MODAL -->
+<div id="callModal" class="modal">
+    <div>
+        <p style="color:var(--accent); font-weight:700; letter-spacing:1px; margin-bottom:20px;">SP VOICE CALL ALERT</p>
+        <div class="caller-avatar">📞</div>
+        <h2 id="modalCallerNumber" style="font-size:1.8rem; margin-bottom:8px;">9876543210</h2>
+        <p id="modalCallerStatus" style="font-size:1rem; color:#d4af37;">உள்வரும் அழைப்பு...</p>
+    </div>
+    <div class="modal-actions">
+        <button class="circle-btn" style="background:var(--danger);" onclick="endSimulatedCall('நிராகரிக்கப்பட்டது')">✖</button>
+        <button class="circle-btn" style="background:var(--success);" onclick="endSimulatedCall('பேசப்பட்டது')">📞</button>
+    </div>
+</div>
+
+<script>
+    // Default Data Initialization
+    let spamList = JSON.parse(localStorage.getItem('sp_spam_list')) || [
+        { number: '1409876543', reason: 'வங்கி கடன் விளம்பரம்' },
+        { number: '9000011111', reason: 'மோசடி அழைப்பு (Spam)' }
+    ];
+
+    let callHistory = JSON.parse(localStorage.getItem('sp_call_history')) || [
+        { number: '9842312345', status: 'அனுமதிக்கப்பட்டது', time: 'இன்று, 10:30 AM', isSpam: false },
+        { number: '1409876543', status: 'Spam எச்சரிக்கை', time: 'நேற்று, 04:15 PM', isSpam: true }
+    ];
+
+    let blockUnknown = JSON.parse(localStorage.getItem('sp_block_unknown')) || false;
+    let voiceGreeting = localStorage.getItem('sp_voice_greeting') || "வணக்கம்! உங்களுக்கு புதிய அழைப்பு வருகிறது.";
+
+    // Initialize UI
+    window.onload = () => {
+        document.getElementById('unknownToggle').checked = blockUnknown;
+        document.getElementById('ttsTextInput').value = voiceGreeting;
+        updateUnknownUI();
+        renderSpamList();
+        renderHistory();
+        setupPWAManifest();
+    };
+
+    // Tab Navigation
+    function switchTab(tabId, btn) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    // Toggle Unknown Numbers
+    function toggleUnknown() {
+        blockUnknown = document.getElementById('unknownToggle').checked;
+        localStorage.setItem('sp_block_unknown', JSON.stringify(blockUnknown));
+        updateUnknownUI();
+    }
+
+    function updateUnknownUI() {
+        const desc = document.getElementById('unknownDesc');
+        const statusText = document.getElementById('protectionStatusText');
+        if (blockUnknown) {
+            desc.innerHTML = 'தற்போது: <strong style="color:var(--danger);">தெரியாத எண்கள் தடுக்கப்படும் (ON)</strong>.';
+            statusText.textContent = "உயர் பாதுகாப்பு (Unknown Blocked)";
+        } else {
+            desc.innerHTML = 'தற்போது: தெரியாத எண்கள் அனுமதிக்கப்படுகின்றன (OFF).';
+            statusText.textContent = "சாதாரண பாதுகாப்பு செயலில் உள்ளது";
+        }
+    }
+
+    // Spam Management
+    function addSpamNumber() {
+        const num = document.getElementById('spamNumberInput').value.trim();
+        const reason = document.getElementById('spamReasonInput').value.trim() || 'Spam எண்';
+        if (!num) return alert('தயவுசெய்து தொலைபேசி எண்ணை உள்ளிடவும்.');
+
+        spamList.unshift({ number: num, reason: reason });
+        localStorage.setItem('sp_spam_list', JSON.stringify(spamList));
+        document.getElementById('spamNumberInput').value = '';
+        document.getElementById('spamReasonInput').value = '';
+        renderSpamList();
+    }
+
+    function deleteSpamNumber(index) {
+        spamList.splice(index, 1);
+        localStorage.setItem('sp_spam_list', JSON.stringify(spamList));
+        renderSpamList();
+    }
+
+    function renderSpamList() {
+        const container = document.getElementById('spamListContainer');
+        document.getElementById('spamCountDisplay').textContent = spamList.length;
+
+        if (spamList.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">Spam எண்கள் எதுவும் இல்லை.</p>';
+            return;
+        }
+
+        container.innerHTML = spamList.map((item, idx) => `
+            <div class="list-item">
+                <div class="item-info">
+                    <h4>${item.number} <span class="tag-spam">SPAM</span></h4>
+                    <p>${item.reason}</p>
+                </div>
+                <button class="btn-danger" onclick="deleteSpamNumber(${idx})">நீக்கு</button>
+            </div>
+        `).join('');
+    }
+
+    // Call History
+    function renderHistory() {
+        const container = document.getElementById('historyListContainer');
+        document.getElementById('historyCountDisplay').textContent = callHistory.length;
+
+        if (callHistory.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted); font-size:0.85rem;">அழைப்புப் பதிவுகள் இல்லை.</p>';
+            return;
+        }
+
+        container.innerHTML = callHistory.map(item => `
+            <div class="list-item">
+                <div class="item-info">
+                    <h4>${item.number} <span class="${item.isSpam ? 'tag-spam' : 'tag-safe'}">${item.status}</span></h4>
+                    <p>${item.time}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function clearHistory() {
+        if (confirm('அனைத்து அழைப்புப் பதிவுகளையும் அழிக்க வேண்டுமா?')) {
+            callHistory = [];
+            localStorage.setItem('sp_call_history', JSON.stringify(callHistory));
+            renderHistory();
+        }
+    }
+
+    // Tamil TTS Engine
+    function speakTamil(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ta-IN';
+            utterance.rate = 0.95;
+            window.speechSynthesis.speak(utterance);
+            return true;
+        }
+        return false;
+    }
+
+    function testTamilVoice() {
+        const text = document.getElementById('ttsTextInput').value.trim();
+        if (!text) return;
+        const ok = speakTamil(text);
+        document.getElementById('ttsStatus').textContent = ok
+            ? "🔊 தமிழ் குரல் ஒலிக்கிறது..."
+            : "⚠️ உங்கள் Browser தமிழ் TTS-ஐ ஆதரிக்கவில்லை.";
+    }
+
+    function saveVoiceGreeting() {
+        voiceGreeting = document.getElementById('ttsTextInput').value.trim();
+        localStorage.setItem('sp_voice_greeting', voiceGreeting);
+        document.getElementById('ttsStatus').textContent = "✅ குரல் அறிவிப்பு சேமிக்கப்பட்டது!";
+    }
+
+    // Call Simulator
+    let currentTestCall = null;
+
+    function simulateIncomingCall() {
+        const num = document.getElementById('testCallInput').value.trim() || '9876543210';
+        const spamMatch = spamList.find(s => s.number === num);
+        const isSpam = Boolean(spamMatch);
+
+        document.getElementById('modalCallerNumber').textContent = num;
+        const statusEl = document.getElementById('modalCallerStatus');
+
+        if (isSpam) {
+            statusEl.textContent = `⚠️ எச்சரிக்கை: Spam அழைப்பு (${spamMatch.reason})`;
+            statusEl.style.color = '#ff6b6b';
+            speakTamil(`எச்சரிக்கை! இது தேவையற்ற அழைப்பு. காரணம்: ${spamMatch.reason}`);
+        } else if (blockUnknown) {
+            statusEl.textContent = "🚫 தெரியாத எண் தடுக்கப்பட்டது";
+            statusEl.style.color = '#ff6b6b';
+            speakTamil("தெரியாத எண்ணிலிருந்து வரும் அழைப்பு தடுக்கப்பட்டுள்ளது.");
+        } else {
+            statusEl.textContent = "✅ பாதுகாப்பான அழைப்பு";
+            statusEl.style.color = '#2ecc71';
+            speakTamil(`${voiceGreeting}. அழைப்பாளர் எண்: ${num.split('').join(' ')}`);
+        }
+
+        currentTestCall = {
+            number: num,
+            status: isSpam ? 'Spam எச்சரிக்கை' : (blockUnknown ? 'தடுக்கப்பட்டது' : 'அனுமதிக்கப்பட்டது'),
+            time: new Date().toLocaleTimeString('ta-IN', { hour: '2-digit', minute: '2-digit' }),
+            isSpam: isSpam || blockUnknown
+        };
+
+        document.getElementById('callModal').classList.add('show');
+    }
+
+    function endSimulatedCall(actionText) {
+        window.speechSynthesis.cancel();
+        document.getElementById('callModal').classList.remove('show');
+        if (currentTestCall) {
+            currentTestCall.status += ` (${actionText})`;
+            callHistory.unshift(currentTestCall);
+            localStorage.setItem('sp_call_history', JSON.stringify(callHistory));
+            renderHistory();
+            currentTestCall = null;
+        }
+    }
+
+    // Dynamic PWA Manifest for Add to Home Screen
+    function setupPWAManifest() {
+        const manifest = {
+            name: "SP Voice Call",
+            short_name: "SP Call",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#0f3d2e",
+            theme_color: "#0f3d2e",
+            icons: [{
+                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230f3d2e'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='%23d4af37'>📞</text></svg>",
+                sizes: "192x192",
+                type: "image/svg+xml"
+            }]
+        };
+        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        document.getElementById('manifest-placeholder').href = URL.createObjectURL(blob);
+    }
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installBtn').style.display = 'inline-block';
+    });
+
+    function installPWA() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt = null;
+            document.getElementById('installBtn').style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>
